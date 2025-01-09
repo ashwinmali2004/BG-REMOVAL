@@ -13,6 +13,10 @@
     ],
     "routes": [
         {
+            "src": "/favicon.ico",
+            "dest": "/dist/favicon.ico"
+        },
+        {
             "src": "/(.*)",
             "dest": "server.js"
         }
