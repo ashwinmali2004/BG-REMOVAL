@@ -1,14 +1,22 @@
 import mongoose from "mongoose";
 
-let isConnected = false; // Track the database connection status
+let isConnected = false; // Global variable to track connection status
 
 const connectDB = async () => {
     if (isConnected) {
         console.log("Using existing MongoDB connection");
-        return; // Use existing connection if already established
+        return mongoose.connection; // Return the existing connection
+    }
+
+    if (mongoose.connection.readyState > 0) {
+        // If mongoose connection is already established
+        console.log("Reusing existing connection");
+        isConnected = true;
+        return mongoose.connection;
     }
 
     try {
+        // Use event listeners to log connection status
         mongoose.connection.on("connected", () => {
             console.log("MongoDB Connected");
         });
@@ -21,13 +29,17 @@ const connectDB = async () => {
             console.log("MongoDB Disconnected");
         });
 
-        await mongoose.connect(`${process.env.MONGODB_URI}/bg-removal`, {
+        // Establish a new connection
+        const connection = await mongoose.connect(process.env.MONGODB_URI, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
-            maxPoolSize: 10, // Enable connection pooling
+            maxPoolSize: 10, // Maintain a pool of database connections
         });
 
-        isConnected = true; // Set connection status
+        isConnected = true; // Set the connection status to true
+        console.log("New MongoDB connection established");
+
+        return connection;
     } catch (error) {
         console.error("Failed to connect to MongoDB:", error.message);
         throw new Error("Database connection failed");
