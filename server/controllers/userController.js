@@ -1,94 +1,91 @@
+import express from 'express';
 import { Webhook } from 'svix';
 import User from '../models/userModel.js';
 
-/**
- * Controller function to handle Clerk webhook events
- * Manages user data synchronization between Clerk and local database
- * @param {import('express').Request} req 
- * @param {import('express').Response} res 
- */
 export const clerkWebhooks = async (req, res) => {
+  // Add raw body parsing
+  const rawBody = req.rawBody; // You'll need to set this up in your express config
+  
   try {
-    // Extract webhook headers
-    const webhookHeaders = {
-      'svix-id': req.headers['svix-id'],
-      'svix-timestamp': req.headers['svix-timestamp'],
-      'svix-signature': req.headers['svix-signature'],
-    };
-
-    // Validate required headers
-    if (!webhookHeaders['svix-id'] || !webhookHeaders['svix-timestamp'] || !webhookHeaders['svix-signature']) {
-      throw new Error('Missing required Svix headers');
+    const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
+    
+    if (!WEBHOOK_SECRET) {
+      throw new Error('Missing Clerk webhook secret');
     }
 
-    // Initialize webhook with secret
-    const webhook = new Webhook(process.env.CLERK_WEBHOOK_SECRET || '');
-    
-    // Verify webhook signature
-    const payload = JSON.stringify(req.body);
-    webhook.verify(payload, webhookHeaders);
+    // Get the headers
+    const svix_id = req.headers['svix-id'];
+    const svix_timestamp = req.headers['svix-timestamp'];
+    const svix_signature = req.headers['svix-signature'];
 
-    const { data, type } = req.body;
+    if (!svix_id || !svix_timestamp || !svix_signature) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required Svix headers'
+      });
+    }
 
-    // Prepare common user data structure
+    // Create webhook instance
+    const wh = new Webhook(WEBHOOK_SECRET);
+
+    let evt;
+    try {
+      evt = wh.verify(rawBody, {
+        'svix-id': svix_id,
+        'svix-timestamp': svix_timestamp,
+        'svix-signature': svix_signature,
+      });
+    } catch (err) {
+      console.error('Webhook verification failed:', err);
+      return res.status(400).json({
+        success: false,
+        message: 'Webhook verification failed'
+      });
+    }
+
+    const { type, data } = evt;
+
+    // Prepare user data
     const userData = {
       clerkId: data.id,
-      email: data.email_addresses[0]?.email_address,
+      email: data.email_addresses?.[0]?.email_address,
       firstName: data.first_name,
       lastName: data.last_name,
       photo: data.image_url,
     };
 
-    // Handle different webhook events
+    // Handle events
     switch (type) {
-      case 'user.created': {
+      case 'user.created':
         await User.create(userData);
-        console.log(`User created: ${data.id}`);
         break;
-      }
 
-      case 'user.updated': {
-        const updatedUser = await User.findOneAndUpdate(
+      case 'user.updated':
+        await User.findOneAndUpdate(
           { clerkId: data.id },
           userData,
-          { new: true }
+          { new: true, runValidators: true }
         );
-        
-        if (!updatedUser) {
-          throw new Error(`User not found for update: ${data.id}`);
-        }
-        
-        console.log(`User updated: ${data.id}`);
         break;
-      }
 
-      case 'user.deleted': {
-        const deletedUser = await User.findOneAndDelete({ clerkId: data.id });
-        
-        if (!deletedUser) {
-          throw new Error(`User not found for deletion: ${data.id}`);
-        }
-        
-        console.log(`User deleted: ${data.id}`);
+      case 'user.deleted':
+        await User.findOneAndDelete({ clerkId: data.id });
         break;
-      }
 
-      default: {
-        console.warn(`Unhandled webhook event type: ${type}`);
-        return res.status(400).json({
-          success: false,
-          message: `Unhandled webhook event type: ${type}`,
-        });
-      }
+      default:
+        console.log(`Unhandled event type: ${type}`);
     }
 
-    return res.status(200).json({ success: true });
+    res.status(200).json({
+      success: true,
+      message: `Webhook handled: ${type}`
+    });
+
   } catch (error) {
-    console.error('Webhook Error:', error.message || 'Unknown error');
-    
-    return res.status(400).json({
+    console.error('Webhook error:', error);
+    res.status(400).json({
       success: false,
-      message: error.message || 'Unknown error occurred',
+      message: error.message
     });
   }
 };
