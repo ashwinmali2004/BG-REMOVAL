@@ -1,14 +1,12 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema({
-    clerkId:{ type: String, required: true, unique: true },
-    email:{ type: String, required: true, unique: true },
-    photo:{ type: String, required: true },
-    firstName:{ type: String },
-    lastName:{ type: String },
-    creditBalance:{ type: Number, default: 5 }
-})
+    name: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    creditBalance: { type: Number, default: 2 }
+}, { minimize: false });
 
-const userModel = mongoose.models.user || mongoose.model("user", userSchema)
+const userModel = mongoose.models.user || mongoose.model('user', userSchema);
 
 export default userModel;
