@@ -85,7 +85,3 @@ vercel --prod
 
 ## Contribution
 Feel free to contribute! Fork the repo and submit a pull request.
-
-## License
-This project is licensed under the MIT License.
-
