@@ -17,7 +17,7 @@ This application is a **Background Removal App** that allows users to upload an 
 ### Home Page
 ![Home Page](./screenshots/home.jpeg)
 
-### Upload Image Page
+### Upgrade Image Page
 ![Upload Image](./screenshots/pay.png)
 
 ### Processed Image Page
