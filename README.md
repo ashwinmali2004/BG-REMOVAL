@@ -1,7 +1,7 @@
 # Background Removal App - Full Stack AI SaaS
 
 ## Overview
-**Full Stack AI SaaS Application** using **MongoDB, Express, React, and Node.js (MERN Stack)**.
+In this tutorial, we will build and deploy a **Full Stack AI SaaS Application** using **MongoDB, Express, React, and Node.js (MERN Stack)**. 
 
 This application is a **Background Removal App** that allows users to upload an image. The app will process the image using AI to remove the background, and users can then download the image with a transparent background.
 
@@ -12,6 +12,16 @@ This application is a **Background Removal App** that allows users to upload an 
 - **Online payment integration** for purchasing more credits.
 - **Modern UI with React & TailwindCSS**.
 - **Secure backend using Node.js, Express, and MongoDB**.
+
+## Screenshots
+### Home Page
+![Home Page](./screenshots/home.jpeg)
+
+### Upgrade Image Page
+![Upload Image](./screenshots/pay.png)
+
+### Processed Image Page
+![Processed Image](./screenshots/remove.png)
 
 ## Tech Stack
 - **Frontend**: React.js, TailwindCSS
@@ -85,3 +95,4 @@ vercel --prod
 
 ## Contribution
 Feel free to contribute! Fork the repo and submit a pull request.
+
